@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Taxi Booking System</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        body {
+            min-height: 100vh;
+            background: #eef2f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 950px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        .brand-panel {
+            background: linear-gradient(135deg, #101f32, #34495e);
+            color: white;
+            padding: 50px 35px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .brand-panel h2 {
+            font-weight: 700;
+        }
+
+        .brand-panel .taxi-icon {
+            font-size: 55px;
+            color: #ffc107;
+        }
+
+        .form-panel {
+            padding: 50px 40px;
+        }
+
+        .login-icon {
+            font-size: 45px;
+            color: #f0ad00;
+        }
+
+        .form-control {
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-login {
+            background: #ffc107;
+            border: none;
+            color: #172337;
+            padding: 13px;
+            font-weight: 700;
+            border-radius: 8px;
+        }
+
+        .btn-login:hover {
+            background: #e5ac00;
+        }
+
+        @media (max-width: 767px) {
+            .brand-panel {
+                min-height: auto;
+                padding: 30px 25px;
+            }
+
+            .form-panel {
+                padding: 35px 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="login-card">
+    <div class="row g-0">
+
+        <div class="col-md-5">
+            <div class="brand-panel">
+                <div class="taxi-icon mb-3">🚕</div>
+                <h2>Taxi Booking System</h2>
+                <h5 class="mt-2">Admin Panel</h5>
+
+                <p class="mt-4">
+                    Manage drivers, users and bookings from one place.
+                </p>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="form-panel">
+                <div class="text-center mb-4">
+                    <div class="login-icon">👤</div>
+                    <h2 class="fw-bold mt-2">Admin Login</h2>
+                    <p class="text-muted">
+                        Enter your admin credentials to continue.
+                    </p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Username
+                        </label>
+                        <input type="text"
+                               name="username"
+                               class="form-control"
+                               placeholder="Enter admin username"
+                               autocomplete="username"
+                               required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            Password
+                        </label>
+                        <input type="password"
+                               name="password"
+                               class="form-control"
+                               placeholder="Enter password"
+                               autocomplete="current-password"
+                               required>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-login w-100">
+                        Login →
+                    </button>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'admin_forgot_password' %}"
+                           class="text-decoration-none">
+                            Forgot Password?
+                        </a>
+                    </div>
+                </form>
+
+                <p class="text-center text-muted mt-4 mb-0">
+                    Authorized administrators only.
+                    <span class="d-block mt-2">
+                        Customer?
+                        <a href="{% url 'user_login' %}"
+                           class="text-decoration-none">Sign in here</a>
+                    </span>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

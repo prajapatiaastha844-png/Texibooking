@@ -1,0 +1,51 @@
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.admin_login, name='admin_login'),
+    path('login/', views.user_login, name='user_login'),
+    path('my-dashboard/', views.user_dashboard, name='user_dashboard'),
+    path('logout/user/', views.user_logout, name='user_logout'),
+    path(
+        'user/forgot-password/',
+        views.user_forgot_password,
+        name='user_forgot_password',
+    ),
+    path(
+        'user/reset-password/verify/',
+        views.user_reset_otp,
+        name='user_reset_otp',
+    ),
+    path('signup/', views.user_register, name='user_register'),
+    path('driver/signup/', views.driver_register, name='driver_register'),
+    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('drivers/', views.admin_drivers, name='admin_drivers'),
+    path(
+        'drivers/<int:driver_id>/',
+        views.admin_driver_detail,
+        name='admin_driver_detail',
+    ),
+    path(
+        'drivers/<int:driver_id>/delete/',
+        views.admin_driver_delete,
+        name='admin_driver_delete',
+    ),
+    path('users/', views.admin_users, name='admin_users'),
+    path('users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
+    path('users/<int:user_id>/edit/', views.admin_user_edit, name='admin_user_edit'),
+    path('users/<int:user_id>/delete/', views.admin_user_delete, name='admin_user_delete'),
+    path('register/', views.admin_register, name='admin_register'),
+    path('logout/', views.admin_logout, name='admin_logout'),
+    path('forgot-password/', views.admin_forgot_password, name='admin_forgot_password'),
+    path(
+        'forgot-password/done/',
+        views.admin_forgot_password_done,
+        name='admin_forgot_password_done',
+    ),
+    path(
+        'reset/verify/',
+        views.admin_reset_otp,
+        name='admin_reset_otp',
+    ),
+]
