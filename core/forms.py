@@ -227,6 +227,37 @@ class CustomerLoginForm(forms.Form):
         return cleaned_data
 
 
+class DriverLoginForm(forms.Form):
+    email = forms.EmailField(
+        label='Email',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control form-control-lg',
+            'autocomplete': 'email',
+            'placeholder': 'Enter your driver account email',
+        }),
+    )
+    password = forms.CharField(
+        label='Password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control form-control-lg',
+            'autocomplete': 'current-password',
+            'placeholder': 'Enter your password',
+        }),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        password = cleaned_data.get('password')
+        if email and password:
+            driver = Driver.objects.filter(email__iexact=email.strip()).first()
+            if driver is None or not driver.check_password(password):
+                raise ValidationError('Invalid email or password.')
+            self.driver = driver
+        return cleaned_data
+
+
 class CustomerForgotPasswordForm(forms.Form):
     email = forms.EmailField(
         label='Email address',

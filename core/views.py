@@ -21,6 +21,7 @@ from .forms import (
     CustomerForgotPasswordForm,
     CustomerLoginForm,
     CustomerRegistrationForm,
+    DriverLoginForm,
     DriverRegistrationForm,
     DriverSearchForm,
     UserEditForm,
@@ -88,6 +89,31 @@ def driver_register(request):
         form = DriverRegistrationForm()
 
     return render(request, 'core/driver_register.html', {'form': form})
+
+
+def driver_login(request):
+    driver_id = request.session.get('driver_user_id')
+    if driver_id is not None:
+        driver = Driver.objects.filter(pk=driver_id).first()
+        if driver is not None:
+            return redirect('driver_dashboard')
+        request.session.pop('driver_user_id', None)
+
+    if request.method == 'POST':
+        form = DriverLoginForm(request.POST)
+        if form.is_valid():
+            driver = form.driver
+            request.session.cycle_key()
+            request.session['driver_user_id'] = driver.pk
+            messages.success(
+                request,
+                f'Welcome back, {driver.name}. You are signed in.',
+            )
+            return redirect('driver_dashboard')
+    else:
+        form = DriverLoginForm()
+
+    return render(request, 'core/driver_login.html', {'form': form})
 
 
 def user_login(request):
@@ -264,11 +290,32 @@ def user_dashboard(request):
     return render(request, 'core/user_dashboard.html', {'customer': customer})
 
 
+def driver_dashboard(request):
+    driver_id = request.session.get('driver_user_id')
+    if driver_id is None:
+        return redirect('driver_login')
+
+    driver = Driver.objects.filter(pk=driver_id).first()
+    if driver is None:
+        request.session.pop('driver_user_id', None)
+        messages.info(request, 'Please sign in to continue.')
+        return redirect('driver_login')
+
+    return render(request, 'core/driver_dashboard.html', {'driver': driver})
+
+
 @require_POST
 def user_logout(request):
     request.session.pop('customer_user_id', None)
     messages.success(request, 'You have been signed out.')
     return redirect('user_login')
+
+
+@require_POST
+def driver_logout(request):
+    request.session.pop('driver_user_id', None)
+    messages.success(request, 'You have been signed out.')
+    return redirect('driver_login')
 
 
 @user_passes_test(lambda user: user.is_authenticated and user.is_staff,

@@ -7,6 +7,13 @@ urlpatterns = [
     path('login/', views.user_login, name='user_login'),
     path('my-dashboard/', views.user_dashboard, name='user_dashboard'),
     path('logout/user/', views.user_logout, name='user_logout'),
+    path('driver/login/', views.driver_login, name='driver_login'),
+    path(
+        'driver/dashboard/',
+        views.driver_dashboard,
+        name='driver_dashboard',
+    ),
+    path('logout/driver/', views.driver_logout, name='driver_logout'),
     path(
         'user/forgot-password/',
         views.user_forgot_password,

@@ -129,9 +129,14 @@
                         </form>
 
                         <p class="small text-secondary text-center mt-4 mb-0">
+                            Already registered as a driver?
+                            <a href="{% url 'driver_login' %}"
+                               class="fw-semibold text-decoration-none">Sign in</a>
+                            <span class="d-block mt-2">
                             Already have a rider account?
                             <a href="{% url 'user_login' %}"
                                class="fw-semibold text-decoration-none">Sign in</a>
+                            </span>
                             <span class="d-block mt-2">
                                 Registering as a rider?
                                 <a href="{% url 'user_register' %}"

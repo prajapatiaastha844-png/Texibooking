@@ -2,6 +2,7 @@ import re
 from datetime import timedelta
 
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import IntegrityError, transaction
@@ -20,6 +21,64 @@ from core.models import (
 
 
 class DriverModelTests(TestCase):
+    def test_save_normalizes_driver_details_and_hashes_password(self):
+        driver = Driver(
+            name='  Morgan Driver  ',
+            email='  MORGAN@EXAMPLE.COM ',
+            license_number=' DL-123456 ',
+            mobile='+1 (555) 987-6543',
+            password='driver-password',
+        )
+
+        driver.save()
+
+        self.assertEqual(driver.name, 'Morgan Driver')
+        self.assertEqual(driver.email, 'morgan@example.com')
+        self.assertEqual(driver.license_number, 'DL-123456')
+        self.assertEqual(driver.mobile, '+15559876543')
+        self.assertNotEqual(driver.password, 'driver-password')
+        self.assertTrue(driver.check_password('driver-password'))
+
+    def test_save_rejects_invalid_driver_data(self):
+        driver = Driver(
+            name='Morgan Driver',
+            email='not-an-email',
+            license_number='DL-123456',
+            mobile='555-abc-1234',
+            password='driver-password',
+        )
+
+        with self.assertRaises(ValidationError):
+            driver.save()
+
+        self.assertEqual(Driver.objects.count(), 0)
+
+    def test_save_rejects_case_insensitive_email_and_license_duplicates(self):
+        Driver.objects.create(
+            name='Existing Driver',
+            email='existing@example.com',
+            license_number='DL-123456',
+            mobile='5559876543',
+            password='first-password',
+        )
+
+        for email, license_number in (
+            ('EXISTING@example.com', 'DL-654321'),
+            ('new@example.com', 'dl-123456'),
+        ):
+            with self.subTest(email=email, license_number=license_number):
+                driver = Driver(
+                    name='New Driver',
+                    email=email,
+                    license_number=license_number,
+                    mobile='5551234567',
+                    password='second-password',
+                )
+                with self.assertRaises(ValidationError):
+                    driver.save()
+
+        self.assertEqual(Driver.objects.count(), 1)
+
     def test_driver_fields_and_password_hashing(self):
         driver = Driver.objects.create(
             name='Morgan Driver',
@@ -82,6 +141,7 @@ class DriverRegistrationTests(TestCase):
         self.assertContains(response, 'name="mobile"')
         self.assertContains(response, 'name="password"')
         self.assertContains(response, reverse('user_login'))
+        self.assertContains(response, reverse('driver_login'))
 
     def test_driver_can_register_with_normalized_details_and_hashed_password(self):
         response = self.client.post(
@@ -167,6 +227,109 @@ class DriverRegistrationTests(TestCase):
                 )
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(Driver.objects.count(), 0)
+
+
+class DriverLoginTests(TestCase):
+    def setUp(self):
+        self.driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='morgan@example.com',
+            license_number='DL-123456',
+            mobile='5559876543',
+            password='Strong-Driver-932!',
+        )
+
+    def test_driver_login_page_shows_email_and_password_fields(self):
+        response = self.client.get(reverse('driver_login'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Driver sign in')
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'name="password"')
+        self.assertContains(response, reverse('driver_register'))
+
+    def test_driver_can_sign_in_and_view_account_details(self):
+        response = self.client.post(
+            reverse('driver_login'),
+            {'email': 'MORGAN@example.com', 'password': 'Strong-Driver-932!'},
+        )
+
+        self.assertRedirects(response, reverse('driver_dashboard'))
+        self.assertEqual(
+            self.client.session['driver_user_id'],
+            self.driver.pk,
+        )
+        response = self.client.get(reverse('driver_dashboard'))
+        self.assertContains(response, 'Welcome back, Morgan Driver')
+        self.assertContains(response, 'morgan@example.com')
+        self.assertContains(response, 'DL-123456')
+        self.assertContains(response, '5559876543')
+        self.assertContains(response, 'Sign out')
+        self.assertNotContains(response, 'Strong-Driver-932!')
+
+    def test_driver_login_rejects_invalid_credentials(self):
+        response = self.client.post(
+            reverse('driver_login'),
+            {'email': 'morgan@example.com', 'password': 'incorrect-password'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Invalid email or password.')
+        self.assertNotIn('driver_user_id', self.client.session)
+
+    def test_driver_dashboard_requires_a_valid_driver_session(self):
+        response = self.client.get(reverse('driver_dashboard'))
+        self.assertRedirects(response, reverse('driver_login'))
+
+        session = self.client.session
+        session['driver_user_id'] = self.driver.pk
+        session.save()
+        response = self.client.get(reverse('driver_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Morgan Driver')
+
+        session = self.client.session
+        session['driver_user_id'] = 99999
+        session.save()
+        response = self.client.get(reverse('driver_dashboard'))
+        self.assertRedirects(response, reverse('driver_login'))
+        self.assertNotIn('driver_user_id', self.client.session)
+
+    def test_driver_login_redirects_existing_session_to_dashboard(self):
+        session = self.client.session
+        session['driver_user_id'] = self.driver.pk
+        session.save()
+
+        response = self.client.get(reverse('driver_login'))
+
+        self.assertRedirects(response, reverse('driver_dashboard'))
+
+    def test_driver_can_sign_out_without_clearing_other_session_auth(self):
+        self.client.force_login(
+            get_user_model().objects.create_user(
+                username='admin',
+                password='admin-password',
+                is_staff=True,
+            )
+        )
+        session = self.client.session
+        session['driver_user_id'] = self.driver.pk
+        session['customer_user_id'] = 42
+        session.save()
+
+        response = self.client.post(reverse('driver_logout'), follow=True)
+
+        self.assertRedirects(response, reverse('driver_login'))
+        self.assertNotIn('driver_user_id', self.client.session)
+        self.assertEqual(self.client.session['customer_user_id'], 42)
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertContains(response, 'signed out')
+
+    def test_driver_logout_rejects_get_requests(self):
+        response = self.client.get(reverse('driver_logout'))
+
+        self.assertEqual(response.status_code, 405)
 
 
 class CustomerRegistrationTests(TestCase):
