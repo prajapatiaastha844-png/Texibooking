@@ -45,6 +45,20 @@ class CustomerPasswordResetOTP(models.Model):
     )
 
 
+class DriverPasswordResetOTP(models.Model):
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    otp_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    driver = models.ForeignKey(
+        'core.Driver',
+        on_delete=models.CASCADE,
+        related_name='password_reset_otps',
+    )
+
+
 class User(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)

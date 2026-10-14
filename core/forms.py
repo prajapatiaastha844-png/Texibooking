@@ -269,6 +269,10 @@ class CustomerForgotPasswordForm(forms.Form):
     )
 
 
+class DriverForgotPasswordForm(CustomerForgotPasswordForm):
+    pass
+
+
 class AdminRegistrationForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)

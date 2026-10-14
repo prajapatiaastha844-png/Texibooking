@@ -15,6 +15,16 @@ urlpatterns = [
     ),
     path('logout/driver/', views.driver_logout, name='driver_logout'),
     path(
+        'driver/forgot-password/',
+        views.driver_forgot_password,
+        name='driver_forgot_password',
+    ),
+    path(
+        'driver/reset-password/verify/',
+        views.driver_reset_otp,
+        name='driver_reset_otp',
+    ),
+    path(
         'user/forgot-password/',
         views.user_forgot_password,
         name='user_forgot_password',

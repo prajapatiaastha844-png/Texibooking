@@ -16,6 +16,7 @@ from core.models import (
     AdminPasswordResetOTP,
     CustomerPasswordResetOTP,
     Driver,
+    DriverPasswordResetOTP,
     User as CustomerUser,
 )
 
@@ -247,6 +248,7 @@ class DriverLoginTests(TestCase):
         self.assertContains(response, 'name="email"')
         self.assertContains(response, 'name="password"')
         self.assertContains(response, reverse('driver_register'))
+        self.assertContains(response, reverse('driver_forgot_password'))
 
     def test_driver_can_sign_in_and_view_account_details(self):
         response = self.client.post(
@@ -330,6 +332,118 @@ class DriverLoginTests(TestCase):
         response = self.client.get(reverse('driver_logout'))
 
         self.assertEqual(response.status_code, 405)
+
+
+class DriverForgotPasswordTests(TestCase):
+    def setUp(self):
+        self.driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='morgan@example.com',
+            license_number='DL-123456',
+            mobile='5559876543',
+            password='Strong-Driver-932!',
+        )
+
+    def test_forgot_password_page_has_email_field_and_back_link(self):
+        response = self.client.get(reverse('driver_forgot_password'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Forgot your password?')
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, reverse('driver_login'))
+
+    def test_unknown_driver_email_gets_generic_response(self):
+        response = self.client.post(
+            reverse('driver_forgot_password'),
+            {'email': 'unknown@example.com'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'If a driver account matches')
+        self.assertEqual(DriverPasswordResetOTP.objects.count(), 0)
+        self.assertNotIn('driver_password_reset_token', self.client.session)
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend',
+    )
+    def test_registered_driver_receives_reset_otp_in_console_email(self):
+        with captured_stdout() as output:
+            response = self.client.post(
+                reverse('driver_forgot_password'),
+                {'email': self.driver.email},
+            )
+
+        console_email = output.getvalue()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('From: admin@taxibooking.local', console_email)
+        self.assertIn('To: morgan@example.com', console_email)
+        self.assertIn('Taxi Booking driver password reset', console_email)
+        self.assertRegex(console_email, r'reset code is \d{6}')
+
+        challenge = DriverPasswordResetOTP.objects.get(driver=self.driver)
+        otp = re.search(r'reset code is (\d{6})', console_email).group(1)
+        self.assertNotEqual(challenge.otp_hash, otp)
+        self.assertTrue(check_password(otp, challenge.otp_hash))
+        self.assertEqual(
+            self.client.session['driver_password_reset_token'],
+            str(challenge.token),
+        )
+
+    @override_settings(
+        EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    )
+    def test_driver_can_reset_password_with_email_code(self):
+        response = self.client.post(
+            reverse('driver_forgot_password'),
+            {'email': 'MORGAN@example.com'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('driver_reset_otp'))
+        challenge = DriverPasswordResetOTP.objects.get(driver=self.driver)
+        self.assertEqual(mail.outbox[0].to, ['morgan@example.com'])
+        otp = re.search(r'code is (\d{6})', mail.outbox[0].body).group(1)
+        self.assertTrue(check_password(otp, challenge.otp_hash))
+
+        reset_url = reverse('driver_reset_otp')
+        response = self.client.post(reset_url, {'otp': otp})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Your verification code has been confirmed.')
+        self.assertContains(response, 'name="new_password1"')
+
+        new_password = 'New-Driver-Password-723!'
+        response = self.client.post(
+            reset_url,
+            {
+                'new_password1': new_password,
+                'new_password2': new_password,
+            },
+        )
+
+        self.assertRedirects(response, reverse('driver_login'))
+        self.driver.refresh_from_db()
+        challenge.refresh_from_db()
+        self.assertTrue(self.driver.check_password(new_password))
+        self.assertTrue(challenge.is_used)
+        self.assertNotIn('driver_password_reset_token', self.client.session)
+        self.assertNotIn(
+            'driver_password_reset_verified_token',
+            self.client.session,
+        )
+
+        response = self.client.post(
+            reverse('driver_login'),
+            {'email': self.driver.email, 'password': new_password},
+        )
+        self.assertRedirects(response, reverse('driver_dashboard'))
+
+    def test_reset_code_page_requires_a_valid_driver_reset_session(self):
+        response = self.client.get(reverse('driver_reset_otp'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Code expired')
+        self.assertContains(response, reverse('driver_forgot_password'))
+        self.assertContains(response, reverse('driver_login'))
 
 
 class CustomerRegistrationTests(TestCase):

@@ -21,6 +21,7 @@ from .forms import (
     CustomerForgotPasswordForm,
     CustomerLoginForm,
     CustomerRegistrationForm,
+    DriverForgotPasswordForm,
     DriverLoginForm,
     DriverRegistrationForm,
     DriverSearchForm,
@@ -32,6 +33,7 @@ from .models import (
     AdminPasswordResetOTP,
     CustomerPasswordResetOTP,
     Driver,
+    DriverPasswordResetOTP,
     User,
 )
 
@@ -139,6 +141,132 @@ def user_login(request):
         form = CustomerLoginForm()
 
     return render(request, 'core/user_login.html', {'form': form})
+
+
+def driver_forgot_password(request):
+    submitted = False
+    if request.method == 'POST':
+        request.session.pop('driver_password_reset_token', None)
+        request.session.pop('driver_password_reset_verified_token', None)
+        form = DriverForgotPasswordForm(request.POST)
+        if form.is_valid():
+            submitted = True
+            email = form.cleaned_data['email'].strip()
+            driver = Driver.objects.filter(email__iexact=email).first()
+            if driver is not None:
+                otp = f'{secrets.randbelow(1_000_000):06d}'
+
+                with transaction.atomic():
+                    DriverPasswordResetOTP.objects.filter(
+                        driver=driver,
+                    ).delete()
+                    challenge = DriverPasswordResetOTP.objects.create(
+                        driver=driver,
+                        otp_hash=make_password(otp),
+                        expires_at=timezone.now() + timedelta(minutes=10),
+                    )
+                    send_mail(
+                        subject='Taxi Booking driver password reset',
+                        message=(
+                            f'Your password reset code is {otp}. '
+                            'It expires in 10 minutes. If you did not request '
+                            'this code, you can ignore this email.'
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[driver.email],
+                        fail_silently=False,
+                    )
+                request.session['driver_password_reset_token'] = str(
+                    challenge.token
+                )
+    else:
+        form = DriverForgotPasswordForm()
+
+    return render(
+        request,
+        'core/driver_forgot_password.html',
+        {'form': form, 'submitted': submitted},
+    )
+
+
+def _render_driver_reset_otp(request, **context):
+    return render(
+        request,
+        'core/user_reset_otp.html',
+        {'driver_mode': True, **context},
+    )
+
+
+def driver_reset_otp(request):
+    token = request.session.get('driver_password_reset_token')
+    if not token:
+        return _render_driver_reset_otp(request, expired=True)
+
+    try:
+        challenge = DriverPasswordResetOTP.objects.select_related(
+            'driver',
+        ).get(token=uuid.UUID(token))
+    except (DriverPasswordResetOTP.DoesNotExist, ValueError):
+        request.session.pop('driver_password_reset_token', None)
+        request.session.pop('driver_password_reset_verified_token', None)
+        return _render_driver_reset_otp(request, expired=True)
+
+    if challenge.is_used or challenge.expires_at <= timezone.now():
+        request.session.pop('driver_password_reset_token', None)
+        request.session.pop('driver_password_reset_verified_token', None)
+        return _render_driver_reset_otp(request, expired=True)
+
+    if challenge.attempts >= 5:
+        return _render_driver_reset_otp(request, locked=True)
+
+    verified = (
+        request.session.get('driver_password_reset_verified_token') == token
+    )
+    form = SetPasswordForm(
+        challenge.driver,
+        request.POST if request.method == 'POST' and verified else None,
+    ) if verified else None
+    error = None
+    if request.method == 'POST':
+        if not verified:
+            otp = request.POST.get('otp', '').strip()
+            if len(otp) != 6 or not otp.isdigit() or not check_password(
+                otp,
+                challenge.otp_hash,
+            ):
+                challenge.attempts += 1
+                challenge.save(update_fields=['attempts'])
+                error = 'The verification code is invalid.'
+                if challenge.attempts >= 5:
+                    return _render_driver_reset_otp(request, locked=True)
+            else:
+                request.session[
+                    'driver_password_reset_verified_token'
+                ] = token
+                verified = True
+                form = SetPasswordForm(challenge.driver)
+        elif form.is_valid():
+            with transaction.atomic():
+                challenge.driver.set_password(
+                    form.cleaned_data['new_password1'],
+                )
+                challenge.driver.save(update_fields=['password'])
+                challenge.is_used = True
+                challenge.save(update_fields=['is_used'])
+            request.session.pop('driver_password_reset_token', None)
+            request.session.pop('driver_password_reset_verified_token', None)
+            messages.success(
+                request,
+                'Your password has been reset. You can now log in.',
+            )
+            return redirect('driver_login')
+
+    return _render_driver_reset_otp(
+        request,
+        form=form,
+        error=error,
+        verified=verified,
+    )
 
 
 def user_forgot_password(request):

@@ -43,7 +43,7 @@
                     This reset code is no longer valid. Request a new code to
                     continue.
                 </p>
-                <a href="{% url 'user_forgot_password' %}"
+                <a href="{% if driver_mode %}{% url 'driver_forgot_password' %}{% else %}{% url 'user_forgot_password' %}{% endif %}"
                    class="btn btn-reset w-100">Request a new code</a>
             {% elif locked %}
                 <h1 class="h3 fw-bold mb-2">Too many attempts</h1>
@@ -51,7 +51,7 @@
                     This reset code has been locked. Request a new code to
                     continue.
                 </p>
-                <a href="{% url 'user_forgot_password' %}"
+                <a href="{% if driver_mode %}{% url 'driver_forgot_password' %}{% else %}{% url 'user_forgot_password' %}{% endif %}"
                    class="btn btn-reset w-100">Request a new code</a>
             {% elif verified %}
                 <p class="small fw-semibold text-primary text-uppercase mb-2">
@@ -124,7 +124,7 @@
             {% endif %}
 
             <p class="text-center mt-4 mb-0">
-                <a href="{% url 'user_login' %}"
+                <a href="{% if driver_mode %}{% url 'driver_login' %}{% else %}{% url 'user_login' %}{% endif %}"
                    class="text-decoration-none">&larr; Back to sign in</a>
             </p>
         </div>
