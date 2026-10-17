@@ -411,6 +411,20 @@ class DriverForgotPasswordTests(TestCase):
         self.assertContains(response, 'Your verification code has been confirmed.')
         self.assertContains(response, 'name="new_password1"')
 
+        response = self.client.post(
+            reset_url,
+            {
+                'new_password1': '12345678',
+                'new_password2': '12345678',
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'This password is entirely numeric.')
+        self.driver.refresh_from_db()
+        challenge.refresh_from_db()
+        self.assertTrue(self.driver.check_password('Strong-Driver-932!'))
+        self.assertFalse(challenge.is_used)
+
         new_password = 'New-Driver-Password-723!'
         response = self.client.post(
             reset_url,
@@ -418,9 +432,17 @@ class DriverForgotPasswordTests(TestCase):
                 'new_password1': new_password,
                 'new_password2': new_password,
             },
+            follow=True,
         )
 
-        self.assertRedirects(response, reverse('driver_login'))
+        self.assertEqual(
+            response.redirect_chain,
+            [(reverse('driver_login'), 302)],
+        )
+        self.assertContains(
+            response,
+            'Your password has been reset. You can now log in.',
+        )
         self.driver.refresh_from_db()
         challenge.refresh_from_db()
         self.assertTrue(self.driver.check_password(new_password))
@@ -774,9 +796,17 @@ class CustomerForgotPasswordFormTests(TestCase):
                 'new_password1': 'New-Customer-Password-723!',
                 'new_password2': 'New-Customer-Password-723!',
             },
+            follow=True,
         )
 
-        self.assertRedirects(response, reverse('user_login'))
+        self.assertEqual(
+            response.redirect_chain,
+            [(reverse('user_login'), 302)],
+        )
+        self.assertContains(
+            response,
+            'Your password has been reset. You can now log in.',
+        )
         self.customer.refresh_from_db()
         challenge.refresh_from_db()
         self.assertTrue(self.customer.check_password('New-Customer-Password-723!'))
@@ -1413,9 +1443,18 @@ class AdminAuthenticationTests(TestCase):
                 'new_password1': 'New-Admin-Password-723!',
                 'new_password2': 'New-Admin-Password-723!',
             },
+            follow=True,
         )
 
-        self.assertRedirects(response, reverse('admin_login'))
+        self.assertEqual(
+            response.redirect_chain,
+            [(reverse('admin_login'), 302)],
+        )
+        self.assertContains(
+            response,
+            'Your password has been reset. You can now log in.',
+        )
+        self.assertContains(response, 'alert-success')
         self.admin.refresh_from_db()
         challenge.refresh_from_db()
         self.assertTrue(self.admin.check_password('New-Admin-Password-723!'))

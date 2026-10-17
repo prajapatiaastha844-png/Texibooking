@@ -247,10 +247,7 @@ def driver_reset_otp(request):
                 form = SetPasswordForm(challenge.driver)
         elif form.is_valid():
             with transaction.atomic():
-                challenge.driver.set_password(
-                    form.cleaned_data['new_password1'],
-                )
-                challenge.driver.save(update_fields=['password'])
+                form.save()
                 challenge.is_used = True
                 challenge.save(update_fields=['is_used'])
             request.session.pop('driver_password_reset_token', None)
@@ -385,8 +382,7 @@ def user_reset_otp(request):
                 form = SetPasswordForm(challenge.user)
         elif form.is_valid():
             with transaction.atomic():
-                challenge.user.set_password(form.cleaned_data['new_password1'])
-                challenge.user.save(update_fields=['password'])
+                form.save()
                 challenge.is_used = True
                 challenge.save(update_fields=['is_used'])
             request.session.pop('customer_password_reset_token', None)
@@ -715,8 +711,7 @@ def admin_reset_otp(request):
                 form = SetPasswordForm(challenge.user)
         elif form.is_valid():
             with transaction.atomic():
-                challenge.user.set_password(form.cleaned_data['new_password1'])
-                challenge.user.save(update_fields=['password'])
+                form.save()
                 challenge.is_used = True
                 challenge.save(update_fields=['is_used'])
             request.session.pop('admin_password_reset_token', None)

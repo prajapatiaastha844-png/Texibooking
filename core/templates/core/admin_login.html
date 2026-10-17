@@ -116,7 +116,8 @@
 
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-{{ message.tags|default:'info' }}"
+                             role="status">
                             {{ message }}
                         </div>
                     {% endfor %}
