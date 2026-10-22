@@ -25,6 +25,7 @@ from .forms import (
     DriverLoginForm,
     DriverRegistrationForm,
     DriverSearchForm,
+    TaxiSearchForm,
     UserEditForm,
     UserSearchForm,
     TaxiForm,
@@ -768,11 +769,25 @@ def admin_add_taxi(request):
 )
 def admin_taxi_list(request):
     taxis = Taxi.objects.select_related('driver').order_by('-id')
+    search_form = TaxiSearchForm(request.GET)
+    search_form.is_valid()
+    search_query = search_form.cleaned_data['q']
+
+    if search_query:
+        taxis = taxis.filter(
+            Q(number__icontains=search_query)
+            | Q(source__icontains=search_query)
+            | Q(destination__icontains=search_query),
+        )
 
     return render(
         request,
         'core/admin_taxi_list.html',
-        {'taxis': taxis},
+        {
+            'taxis': taxis,
+            'search_form': search_form,
+            'search_query': search_query,
+        },
     )
 
 

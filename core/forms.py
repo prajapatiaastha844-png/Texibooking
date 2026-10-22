@@ -314,6 +314,19 @@ class DriverSearchForm(forms.Form):
     )
 
 
+class TaxiSearchForm(forms.Form):
+    q = forms.CharField(
+        label='Search taxis',
+        required=False,
+        strip=True,
+        widget=forms.SearchInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Search by taxi number, source, or destination',
+            'aria-describedby': 'taxi-search-help',
+        }),
+    )
+
+
 class TaxiForm(forms.ModelForm):
     class Meta:
         model = Taxi

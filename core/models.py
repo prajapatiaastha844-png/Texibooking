@@ -98,6 +98,7 @@ class Driver(models.Model):
         unique=True
     )
     mobile = models.CharField(max_length=15)
+    taxi_number = models.CharField(max_length=20, blank=True)
     password = models.CharField(max_length=128)
 
     def set_password(self, raw_password):
@@ -202,3 +203,16 @@ class Taxi(models.Model):
 
     def __str__(self):
         return self.number
+
+
+class TaxiDetails(models.Model):
+    source = models.CharField(max_length=100)
+    destination = models.CharField(max_length=100)
+    driver = models.ForeignKey(
+        Driver,
+        on_delete=models.CASCADE,
+        related_name='taxi_details',
+    )
+
+    def __str__(self):
+        return f'{self.source} to {self.destination} ({self.driver})'

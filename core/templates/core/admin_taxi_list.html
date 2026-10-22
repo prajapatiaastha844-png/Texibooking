@@ -63,6 +63,25 @@
         </a>
     </div>
 
+    <form method="get" class="card page-card mb-4" role="search">
+        <div class="card-body">
+            <label for="{{ search_form.q.id_for_label }}" class="form-label fw-semibold">
+                {{ search_form.q.label }}
+            </label>
+            <div class="input-group">
+                {{ search_form.q }}
+                <button class="btn btn-primary" type="submit">Search</button>
+                {% if search_query %}
+                    <a class="btn btn-outline-secondary" href="{% url 'admin_taxi_list' %}">Clear</a>
+                {% endif %}
+            </div>
+            <div id="taxi-search-help" class="form-text">
+                Find taxis by taxi number, source, or destination.
+                {% if search_query %}Showing results for “{{ search_query }}”.{% endif %}
+            </div>
+        </div>
+    </form>
+
     <div class="card page-card">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -76,7 +95,8 @@
                             <th>Destination</th>
                             <th>Price (₹)</th>
                             <th>Driver</th>
-                            <th>Availability</th>
+                            <th>Driver Email</th>
+                            <th>Taxi Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -97,13 +117,20 @@
                                 {% endif %}
                             </td>
                             <td>
+                                {% if taxi.driver %}
+                                    {{ taxi.driver.email|default:"—" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
                                 {% if taxi.availability %}
                                     <span class="badge bg-success">
                                         Available
                                     </span>
                                 {% else %}
                                     <span class="badge bg-secondary">
-                                        Not Available
+                                        Unavailable
                                     </span>
                                 {% endif %}
                             </td>
@@ -126,15 +153,22 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="9" class="text-center py-5">
-                                <h5>No taxis found</h5>
-                                <p class="text-secondary">
-                                    Add your first taxi to display it here.
-                                </p>
-                                <a href="{% url 'admin_add_taxi' %}"
-                                   class="btn btn-primary">
-                                    Add Taxi
-                                </a>
+                            <td colspan="10" class="text-center py-5">
+                                {% if search_query %}
+                                    <h5>No matching taxis</h5>
+                                    <p class="text-secondary mb-0">
+                                        No taxis match your search. Try a different taxi number, source, or destination.
+                                    </p>
+                                {% else %}
+                                    <h5>No taxis found</h5>
+                                    <p class="text-secondary">
+                                        Add your first taxi to display it here.
+                                    </p>
+                                    <a href="{% url 'admin_add_taxi' %}"
+                                       class="btn btn-primary">
+                                        Add Taxi
+                                    </a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
