@@ -1,7 +1,6 @@
 
 from django.contrib import admin
-from .models import User
-from .models import Driver
+from .models import Driver, Taxi, User
 
 @admin.register(Driver)
 class DriverAdmin(admin.ModelAdmin):
@@ -13,6 +12,22 @@ class DriverAdmin(admin.ModelAdmin):
         'mobile',
     )
     search_fields = ('name', 'email', 'license_number')
+
+
+@admin.register(Taxi)
+class TaxiAdmin(admin.ModelAdmin):
+    list_display = (
+        'number',
+        'type',
+        'source',
+        'destination',
+        'price',
+        'availability',
+        'driver',
+    )
+    list_filter = ('type', 'availability')
+    search_fields = ('number', 'source', 'destination', 'driver__name')
+
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):

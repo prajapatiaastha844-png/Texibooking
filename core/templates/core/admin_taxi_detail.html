@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Taxi Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <div class="card border-0 shadow-sm mx-auto"
+         style="max-width:700px">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h3 fw-bold mb-4">Taxi Details</h1>
+
+            <dl class="row">
+                <dt class="col-sm-4">Taxi Number</dt>
+                <dd class="col-sm-8">{{ taxi.number }}</dd>
+
+                <dt class="col-sm-4">Taxi Type</dt>
+                <dd class="col-sm-8">{{ taxi.type }}</dd>
+
+                <dt class="col-sm-4">Source</dt>
+                <dd class="col-sm-8">{{ taxi.source }}</dd>
+
+                <dt class="col-sm-4">Destination</dt>
+                <dd class="col-sm-8">{{ taxi.destination }}</dd>
+
+                <dt class="col-sm-4">Price</dt>
+                <dd class="col-sm-8">₹{{ taxi.price|floatformat:2 }}</dd>
+
+                <dt class="col-sm-4">Driver</dt>
+                <dd class="col-sm-8">{{ taxi.driver.name|default:"Not assigned" }}</dd>
+
+                <dt class="col-sm-4">Availability</dt>
+                <dd class="col-sm-8">
+                    {% if taxi.availability %}
+                        <span class="badge bg-success">Available</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Not Available</span>
+                    {% endif %}
+                </dd>
+            </dl>
+
+            <hr>
+
+            <a href="{% url 'admin_taxi_list' %}"
+               class="btn btn-secondary">Back to List</a>
+            <a href="{% url 'admin_taxi_edit' taxi.id %}"
+               class="btn btn-warning">Edit Taxi</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

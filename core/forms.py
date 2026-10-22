@@ -5,7 +5,7 @@ from django import forms
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-from .models import Driver, User
+from .models import Driver, User ,Taxi
 
 
 class CustomerRegistrationForm(forms.ModelForm):
@@ -312,3 +312,58 @@ class DriverSearchForm(forms.Form):
             'aria-describedby': 'driver-search-help',
         }),
     )
+
+
+class TaxiForm(forms.ModelForm):
+    class Meta:
+        model = Taxi
+        fields = [
+            'number',
+            'type',
+            'source',
+            'destination',
+            'price',
+            'availability',
+            'driver',
+        ]
+
+        widgets = {
+            'number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter taxi number',
+            }),
+            'type': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. Sedan, SUV, Hatchback',
+            }),
+            'source': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter pickup location',
+            }),
+            'destination': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter destination',
+            }),
+            'price': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter price',
+                'min': '0',
+                'step': '0.01',
+            }),
+            'availability': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'driver': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+        }
+
+        labels = {
+            'number': 'Taxi Number',
+            'type': 'Taxi Type',
+            'source': 'Source',
+            'destination': 'Destination',
+            'price': 'Price (₹)',
+            'availability': 'Available for Booking',
+            'driver': 'Select Driver',
+        }

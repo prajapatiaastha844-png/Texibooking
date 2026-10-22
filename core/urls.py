@@ -65,4 +65,34 @@ urlpatterns = [
         views.admin_reset_otp,
         name='admin_reset_otp',
     ),
+    
+    path(
+    'taxis/add/',
+    views.admin_add_taxi,
+    name='admin_add_taxi',
+),
+    
+    
+    # Taxi management
+    path(
+        'taxis/',
+        views.admin_taxi_list,
+        name='admin_taxi_list',
+    ),
+    path(
+        'taxis/<int:taxi_id>/',
+        views.admin_taxi_detail,
+        name='admin_taxi_detail',
+    ),
+    path(
+        'taxis/<int:taxi_id>/edit/',
+        views.admin_taxi_edit,
+        name='admin_taxi_edit',
+    ),
+    path(
+        'taxis/<int:taxi_id>/delete/',
+        views.admin_taxi_delete,
+        name='admin_taxi_delete',
+    ),
+
 ]

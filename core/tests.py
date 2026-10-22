@@ -17,8 +17,34 @@ from core.models import (
     CustomerPasswordResetOTP,
     Driver,
     DriverPasswordResetOTP,
+    Taxi,
     User as CustomerUser,
 )
+
+
+class TaxiModelTests(TestCase):
+    def test_taxi_fields_and_driver_relationship(self):
+        driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='morgan@example.com',
+            license_number='DL-123456',
+            mobile='5559876543',
+            password='driver-password',
+        )
+
+        taxi = Taxi.objects.create(
+            number='CAB-123',
+            type='Sedan',
+            source='Downtown',
+            destination='Airport',
+            price='25.50',
+            availability=True,
+            driver=driver,
+        )
+
+        self.assertEqual(taxi.driver, driver)
+        self.assertEqual(driver.taxis.get(), taxi)
+        self.assertEqual(str(taxi), 'CAB-123')
 
 
 class DriverModelTests(TestCase):

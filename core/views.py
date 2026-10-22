@@ -27,6 +27,7 @@ from .forms import (
     DriverSearchForm,
     UserEditForm,
     UserSearchForm,
+    TaxiForm,
 )
 from .models import (
     AdminAccount,
@@ -35,6 +36,7 @@ from .models import (
     Driver,
     DriverPasswordResetOTP,
     User,
+    Taxi,
 )
 
 
@@ -733,3 +735,105 @@ def admin_reset_otp(request):
 def admin_logout(request):
     logout(request)
     return redirect('admin_login')
+
+@user_passes_test(
+    lambda user: user.is_authenticated and user.is_staff,
+    login_url='admin_login',
+)
+def admin_add_taxi(request):
+    if request.method == 'POST':
+        form = TaxiForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                'Taxi added successfully!'
+            )
+            return redirect('admin_add_taxi')
+    else:
+        form = TaxiForm()
+
+    return render(
+        request,
+        'core/admin_add_taxi.html',
+        {'form': form},
+    )
+    
+    
+# List all taxis
+@user_passes_test(
+    lambda user: user.is_authenticated and user.is_staff,
+    login_url='admin_login',
+)
+def admin_taxi_list(request):
+    taxis = Taxi.objects.select_related('driver').order_by('-id')
+
+    return render(
+        request,
+        'core/admin_taxi_list.html',
+        {'taxis': taxis},
+    )
+
+
+# View taxi details
+@user_passes_test(
+    lambda user: user.is_authenticated and user.is_staff,
+    login_url='admin_login',
+)
+def admin_taxi_detail(request, taxi_id):
+    taxi = get_object_or_404(
+        Taxi.objects.select_related('driver'),
+        pk=taxi_id,
+    )
+
+    return render(
+        request,
+        'core/admin_taxi_detail.html',
+        {'taxi': taxi},
+    )
+
+
+# Edit taxi
+@user_passes_test(
+    lambda user: user.is_authenticated and user.is_staff,
+    login_url='admin_login',
+)
+def admin_taxi_edit(request, taxi_id):
+    taxi = get_object_or_404(Taxi, pk=taxi_id)
+
+    if request.method == 'POST':
+        form = TaxiForm(request.POST, instance=taxi)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Taxi updated successfully!')
+            return redirect('admin_taxi_list')
+    else:
+        form = TaxiForm(instance=taxi)
+
+    return render(
+        request,
+        'core/admin_taxi_edit.html',
+        {'form': form, 'taxi': taxi},
+    )
+
+
+# Delete taxi after confirmation
+@user_passes_test(
+    lambda user: user.is_authenticated and user.is_staff,
+    login_url='admin_login',
+)
+def admin_taxi_delete(request, taxi_id):
+    taxi = get_object_or_404(Taxi, pk=taxi_id)
+
+    if request.method == 'POST':
+        taxi.delete()
+        messages.success(request, 'Taxi deleted successfully!')
+        return redirect('admin_taxi_list')
+
+    return render(
+        request,
+        'core/admin_taxi_delete.html',
+        {'taxi': taxi},
+    )

@@ -151,6 +151,12 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'admin_users' %}">Users</a>
                 </li>
+
+                <li class="nav-item">
+    <a class="nav-link" href="{% url 'admin_taxi_list' %}">
+        Manage Taxis
+    </a>
+</li>
                 <li class="nav-item">
                     <span class="nav-link text-white-50" aria-disabled="true">
                         Bookings
@@ -284,6 +290,14 @@
                         </p>
                     </div>
                 </div>
+
+                  <!-- Add New Taxi Button: YAHAN ADD KAREIN -->
+    <div class="mb-3">
+        <a href="{% url 'admin_add_taxi' %}"
+           class="btn btn-primary px-4 py-2">
+            + Add New Taxi
+        </a>
+    </div>
                 <div class="row g-3">
                     <div class="col-12 col-md-6 col-xl-4">
                         <a class="card management-card shadow-sm h-100 text-decoration-none"
