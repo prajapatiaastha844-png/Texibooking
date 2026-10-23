@@ -21,6 +21,7 @@ from .forms import (
     CustomerForgotPasswordForm,
     CustomerLoginForm,
     CustomerRegistrationForm,
+    CustomerTaxiSearchForm,
     DriverForgotPasswordForm,
     DriverLoginForm,
     DriverRegistrationForm,
@@ -414,7 +415,43 @@ def user_dashboard(request):
         messages.info(request, 'Please sign in to continue.')
         return redirect('user_login')
 
-    return render(request, 'core/user_dashboard.html', {'customer': customer})
+    search_form = CustomerTaxiSearchForm(request.GET or None)
+    taxis = Taxi.objects.none()
+    searched = bool(request.GET)
+    if searched and search_form.is_valid():
+        taxis = Taxi.objects.filter(
+            availability=True,
+            source__iexact=search_form.cleaned_data['source'],
+            destination__iexact=search_form.cleaned_data['destination'],
+        ).select_related('driver').order_by('price', 'number')
+
+    return render(request, 'core/user_dashboard.html', {
+        'customer': customer,
+        'search_form': search_form,
+        'taxis': taxis,
+        'searched': searched,
+    })
+
+
+def user_taxi_detail(request, taxi_id):
+    customer_id = request.session.get('customer_user_id')
+    if customer_id is None:
+        return redirect('user_login')
+
+    customer = User.objects.filter(pk=customer_id).first()
+    if customer is None:
+        request.session.pop('customer_user_id', None)
+        messages.info(request, 'Please sign in to continue.')
+        return redirect('user_login')
+
+    taxi = get_object_or_404(
+        Taxi.objects.select_related('driver'),
+        pk=taxi_id,
+    )
+    return render(request, 'core/user_taxi_detail.html', {
+        'customer': customer,
+        'taxi': taxi,
+    })
 
 
 def driver_dashboard(request):

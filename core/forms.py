@@ -327,6 +327,29 @@ class TaxiSearchForm(forms.Form):
     )
 
 
+class CustomerTaxiSearchForm(forms.Form):
+    source = forms.CharField(
+        label='Pickup location',
+        max_length=100,
+        strip=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg',
+            'placeholder': 'Enter pickup location',
+            'autocomplete': 'address-level2',
+        }),
+    )
+    destination = forms.CharField(
+        label='Destination',
+        max_length=100,
+        strip=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg',
+            'placeholder': 'Enter destination',
+            'autocomplete': 'address-level2',
+        }),
+    )
+
+
 class TaxiForm(forms.ModelForm):
     class Meta:
         model = Taxi

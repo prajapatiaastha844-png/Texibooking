@@ -48,6 +48,11 @@
             letter-spacing: 0.04em;
             text-transform: uppercase;
         }
+
+        .content-card {
+            border: 0;
+            border-radius: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -88,6 +93,58 @@
             </p>
         </div>
     </section>
+
+    <section class="card content-card shadow-sm mb-4" aria-labelledby="taxi-search-heading">
+        <div class="card-body p-4 p-md-5">
+            <h2 id="taxi-search-heading" class="h4 fw-bold mb-1">Find a taxi</h2>
+            <p class="text-secondary mb-4">Search for available taxis on your route.</p>
+            <form method="get" action="{% url 'user_dashboard' %}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-5">
+                        <label class="form-label" for="{{ search_form.source.id_for_label }}">{{ search_form.source.label }}</label>
+                        {{ search_form.source }}
+                        {% for error in search_form.source.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-12 col-md-5">
+                        <label class="form-label" for="{{ search_form.destination.id_for_label }}">{{ search_form.destination.label }}</label>
+                        {{ search_form.destination }}
+                        {% for error in search_form.destination.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                    <div class="col-12 col-md-2">
+                        <button class="btn btn-primary btn-lg w-100" type="submit">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    {% if searched and search_form.is_valid %}
+        <section class="card content-card shadow-sm mb-4" aria-labelledby="taxi-results-heading">
+            <div class="card-body p-4 p-md-5">
+                <h2 id="taxi-results-heading" class="h4 fw-bold mb-3">Available taxis</h2>
+                {% if taxis %}
+                    <div class="row g-3">
+                        {% for taxi in taxis %}
+                            <div class="col-12 col-lg-6">
+                                <article class="border rounded-3 p-3 h-100">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <h3 class="h6 fw-bold mb-1"><a href="{% url 'user_taxi_detail' taxi.id %}" class="link-dark">{{ taxi.type }} · {{ taxi.number }}</a></h3>
+                                            <p class="text-secondary mb-2">{{ taxi.source }} to {{ taxi.destination }}</p>
+                                            <div class="small">Driver email: <a href="mailto:{{ taxi.driver.email }}">{{ taxi.driver.email }}</a></div>
+                                        </div>
+                                        <div class="fw-bold text-nowrap">₹{{ taxi.price }}</div>
+                                    </div>
+                                </article>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-secondary mb-0">No available taxis were found for that route.</p>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
 
     <section class="card content-card shadow-sm" aria-labelledby="account-heading">
         <div class="card-body p-4 p-md-5">
