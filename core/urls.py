@@ -11,6 +11,14 @@ urlpatterns = [
         views.user_taxi_detail,
         name='user_taxi_detail',
     ),
+    
+    
+    path(
+    'my-dashboard/taxis/<int:taxi_id>/book/',
+    views.book_taxi,
+    name='book_taxi',
+),
+    
     path('logout/user/', views.user_logout, name='user_logout'),
     path('driver/login/', views.driver_login, name='driver_login'),
     path(

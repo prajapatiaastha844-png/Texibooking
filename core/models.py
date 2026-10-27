@@ -8,6 +8,37 @@ from django.db import models
 from django.contrib.auth.hashers import check_password, identify_hasher, make_password
 
 
+class Booking(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Confirmed', 'Confirmed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    user = models.ForeignKey(
+        'core.User',
+        on_delete=models.CASCADE,
+        related_name='bookings'
+    )
+
+    taxi = models.ForeignKey(
+        'core.Taxi',
+        on_delete=models.CASCADE,
+        related_name='bookings'
+    )
+
+    date = models.DateTimeField(auto_now_add=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
+
+    def __str__(self):
+        return f'{self.user.name} - {self.taxi.number}'
+
+
 class AdminAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.OneToOneField(

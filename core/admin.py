@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import Driver, Taxi, TaxiDetails, User
+from .models import Driver, Taxi, TaxiDetails, User, Booking
 
 @admin.register(Driver)
 class DriverAdmin(admin.ModelAdmin):
@@ -46,3 +46,10 @@ class UserAdmin(admin.ModelAdmin):
         if obj:
             return ('password',)
         return ()
+
+
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'taxi', 'date', 'status')
+    list_filter = ('status', 'date')
+    search_fields = ('user__name', 'taxi__number')
