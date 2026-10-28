@@ -488,6 +488,29 @@ def book_taxi(request, taxi_id):
     return redirect('booking_confirmation', booking_id=booking.pk)
 
 
+def booking_history(request):
+    customer_id = request.session.get('customer_user_id')
+    if customer_id is None:
+        messages.info(request, 'Please sign in to view your booking history.')
+        return redirect('user_login')
+
+    customer = User.objects.filter(pk=customer_id).first()
+    if customer is None:
+        request.session.pop('customer_user_id', None)
+        messages.info(request, 'Please sign in again.')
+        return redirect('user_login')
+
+    bookings = Booking.objects.filter(user=customer).select_related(
+        'taxi',
+        'taxi__driver',
+    ).order_by('-date')
+
+    return render(request, 'core/booking_history.html', {
+        'customer': customer,
+        'bookings': bookings,
+    })
+
+
 def booking_confirmation(request, booking_id):
     customer_id = request.session.get('customer_user_id')
     if customer_id is None:

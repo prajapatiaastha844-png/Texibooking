@@ -61,12 +61,15 @@
         <a class="navbar-brand fw-bold" href="{% url 'user_dashboard' %}">
             🚕 Taxi Booking
         </a>
-        <form method="post" action="{% url 'user_logout' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline-light btn-sm">
-                Sign out
-            </button>
-        </form>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'booking_history' %}" class="btn btn-outline-light btn-sm">Booking history</a>
+            <form method="post" action="{% url 'user_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-light btn-sm">
+                    Sign out
+                </button>
+            </form>
+        </div>
     </div>
 </nav>
 

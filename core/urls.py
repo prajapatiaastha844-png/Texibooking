@@ -23,6 +23,16 @@ urlpatterns = [
         views.booking_confirmation,
         name='booking_confirmation',
     ),
+    path(
+        'my-dashboard/bookings/history/',
+        views.booking_history,
+        name='booking_history',
+    ),
+    path(
+        'my-dashboard/bookings/history/',
+        views.booking_history,
+        name='user_booking_history',
+    ),
     
     path('logout/user/', views.user_logout, name='user_logout'),
     path('driver/login/', views.driver_login, name='driver_login'),
