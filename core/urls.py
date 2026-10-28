@@ -14,10 +14,15 @@ urlpatterns = [
     
     
     path(
-    'my-dashboard/taxis/<int:taxi_id>/book/',
-    views.book_taxi,
-    name='book_taxi',
-),
+        'my-dashboard/taxis/<int:taxi_id>/book/',
+        views.book_taxi,
+        name='book_taxi',
+    ),
+    path(
+        'my-dashboard/bookings/<int:booking_id>/confirmation/',
+        views.booking_confirmation,
+        name='booking_confirmation',
+    ),
     
     path('logout/user/', views.user_logout, name='user_logout'),
     path('driver/login/', views.driver_login, name='driver_login'),

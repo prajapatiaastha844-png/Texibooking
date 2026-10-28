@@ -14,6 +14,7 @@ from django.utils import timezone
 from core.models import (
     AdminAccount,
     AdminPasswordResetOTP,
+    Booking,
     CustomerPasswordResetOTP,
     Driver,
     DriverPasswordResetOTP,
@@ -680,6 +681,96 @@ class CustomerLoginTests(TestCase):
         response = self.client.get(reverse('user_login'))
 
         self.assertRedirects(response, reverse('user_dashboard'))
+
+
+class CustomerTaxiBookingTests(TestCase):
+    def setUp(self):
+        self.customer = CustomerUser.objects.create(
+            name='Morgan Customer',
+            email='morgan@example.com',
+            mobile='5559876543',
+            password='Strong-Pass-932!',
+        )
+        self.driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='driver@example.com',
+            license_number='DL-123456',
+            mobile='5551234567',
+            password='driver-password',
+        )
+        self.taxi = Taxi.objects.create(
+            number='CAB-123',
+            type='Sedan',
+            source='Downtown',
+            destination='Airport',
+            price='25.50',
+            driver=self.driver,
+        )
+        session = self.client.session
+        session['customer_user_id'] = self.customer.pk
+        session.save()
+
+    def test_taxi_detail_offers_booking_when_taxi_is_available(self):
+        response = self.client.get(
+            reverse('user_taxi_detail', args=[self.taxi.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Confirm Booking')
+        self.assertContains(
+            response,
+            f'action="{reverse("book_taxi", args=[self.taxi.pk])}"',
+        )
+
+    def test_taxi_detail_does_not_offer_booking_when_taxi_is_unavailable(self):
+        self.taxi.availability = False
+        self.taxi.save(update_fields=['availability'])
+
+        response = self.client.get(
+            reverse('user_taxi_detail', args=[self.taxi.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Taxi unavailable')
+        self.assertNotContains(response, 'Confirm Booking')
+
+    def test_customer_can_confirm_booking_from_taxi_detail(self):
+        response = self.client.post(
+            reverse('book_taxi', args=[self.taxi.pk]),
+            follow=True,
+        )
+
+        booking = Booking.objects.get()
+        self.assertRedirects(
+            response,
+            reverse('booking_confirmation', args=[booking.pk]),
+        )
+        self.assertEqual(booking.user, self.customer)
+        self.assertEqual(booking.taxi, self.taxi)
+        self.assertEqual(booking.status, 'Pending')
+        self.taxi.refresh_from_db()
+        self.assertFalse(self.taxi.availability)
+        self.assertContains(response, 'Booking confirmed')
+        self.assertContains(response, 'Pending')
+
+    def test_customer_cannot_view_another_customers_booking_confirmation(self):
+        another_customer = CustomerUser.objects.create(
+            name='Another Customer',
+            email='another@example.com',
+            mobile='5557654321',
+            password='Strong-Pass-932!',
+        )
+        booking = Booking.objects.create(
+            user=another_customer,
+            taxi=self.taxi,
+            status='Pending',
+        )
+
+        response = self.client.get(
+            reverse('booking_confirmation', args=[booking.pk]),
+        )
+
+        self.assertEqual(response.status_code, 404)
 
 
 class CustomerForgotPasswordFormTests(TestCase):

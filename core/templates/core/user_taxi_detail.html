@@ -31,6 +31,14 @@
 </nav>
 
 <main class="container py-4 py-md-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}"
+                 role="status">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
     <a href="{% url 'user_dashboard' %}" class="btn btn-outline-secondary mb-3">&larr; Back to search</a>
     <section class="card content-card shadow-sm">
         <div class="card-body p-4 p-md-5">
@@ -73,6 +81,20 @@
                     <div class="detail-label mb-1">Driver phone</div>
                     <div class="fw-semibold"><a href="tel:{{ taxi.driver.mobile }}">{{ taxi.driver.mobile }}</a></div>
                 </div>
+            </div>
+            <div class="mt-4">
+                {% if taxi.availability %}
+                    <form method="post" action="{% url 'book_taxi' taxi.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Confirm Booking
+                        </button>
+                    </form>
+                {% else %}
+                    <button type="button" class="btn btn-secondary btn-lg" disabled>
+                        Taxi unavailable
+                    </button>
+                {% endif %}
             </div>
         </div>
     </section>

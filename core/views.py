@@ -457,14 +457,12 @@ def user_taxi_detail(request, taxi_id):
     
 @require_POST
 def book_taxi(request, taxi_id):
-    # Check whether the customer is logged in.
     customer_id = request.session.get('customer_user_id')
 
     if customer_id is None:
         messages.info(request, 'Please sign in to book a taxi.')
         return redirect('user_login')
 
-    # Find the customer.
     customer = User.objects.filter(pk=customer_id).first()
 
     if customer is None:
@@ -472,30 +470,44 @@ def book_taxi(request, taxi_id):
         messages.info(request, 'Please sign in again.')
         return redirect('user_login')
 
-    # Find the selected taxi.
     taxi = get_object_or_404(Taxi, pk=taxi_id)
 
-    # Check taxi availability.
     if not taxi.availability:
         messages.error(request, 'Sorry, this taxi is no longer available.')
         return redirect('user_dashboard')
 
-    # Create the booking.
-    Booking.objects.create(
+    booking = Booking.objects.create(
         user=customer,
         taxi=taxi,
+        status='Pending',
     )
 
-    # Mark the taxi unavailable after booking.
     taxi.availability = False
     taxi.save(update_fields=['availability'])
 
-    messages.success(
-        request,
-        f'Taxi {taxi.number} has been booked successfully!'
-    )
+    return redirect('booking_confirmation', booking_id=booking.pk)
 
-    return redirect('user_dashboard')
+
+def booking_confirmation(request, booking_id):
+    customer_id = request.session.get('customer_user_id')
+    if customer_id is None:
+        messages.info(request, 'Please sign in to view your booking.')
+        return redirect('user_login')
+
+    customer = User.objects.filter(pk=customer_id).first()
+    if customer is None:
+        request.session.pop('customer_user_id', None)
+        messages.info(request, 'Please sign in again.')
+        return redirect('user_login')
+
+    booking = get_object_or_404(
+        Booking.objects.select_related('taxi', 'taxi__driver'),
+        pk=booking_id,
+        user=customer,
+    )
+    return render(request, 'core/booking_confirmation.html', {
+        'booking': booking,
+    })
     
 
 def driver_dashboard(request):
