@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import check_password, identify_hasher, make_pa
 class Booking(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
-        ('Confirmed', 'Confirmed'),
+        ('Approved', 'Approved'),
         ('Cancelled', 'Cancelled'),
     ]
 

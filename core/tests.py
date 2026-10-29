@@ -752,6 +752,28 @@ class CustomerTaxiBookingTests(TestCase):
         self.assertFalse(self.taxi.availability)
         self.assertContains(response, 'Booking confirmed')
         self.assertContains(response, 'Pending')
+        self.assertContains(response, 'Sedan')
+        self.assertContains(response, 'CAB-123')
+        self.assertContains(response, 'Morgan Driver')
+        self.assertContains(response, 'driver@example.com')
+        self.assertContains(response, '5551234567')
+
+    def test_customer_booking_history_shows_taxi_and_driver_details(self):
+        Booking.objects.create(
+            user=self.customer,
+            taxi=self.taxi,
+            status='Approved',
+        )
+
+        response = self.client.get(reverse('booking_history'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sedan')
+        self.assertContains(response, 'CAB-123')
+        self.assertContains(response, '25.50')
+        self.assertContains(response, 'Morgan Driver')
+        self.assertContains(response, 'driver@example.com')
+        self.assertContains(response, '5551234567')
 
     def test_customer_cannot_view_another_customers_booking_confirmation(self):
         another_customer = CustomerUser.objects.create(
@@ -1364,6 +1386,58 @@ class AdminAuthenticationTests(TestCase):
             reverse('admin_user_edit', args=[customer.pk]),
         )
         self.assertNotContains(response, customer.password)
+
+    def test_admin_user_profile_lists_only_that_users_bookings(self):
+        self.client.force_login(self.admin)
+        customer = CustomerUser.objects.create(
+            name='Rider One',
+            email='rider@example.com',
+            mobile='5551234567',
+            password='rider-password',
+        )
+        other_customer = CustomerUser.objects.create(
+            name='Rider Two',
+            email='rider2@example.com',
+            mobile='5557654321',
+            password='rider-password',
+        )
+        driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='morgan@example.com',
+            license_number='DL-123456',
+            mobile='5559876543',
+            password='driver-password',
+        )
+        taxi = Taxi.objects.create(
+            number='CAB-123',
+            type='Sedan',
+            source='Downtown',
+            destination='Airport',
+            price='25.50',
+            availability=True,
+            driver=driver,
+        )
+        customer_booking = Booking.objects.create(
+            user=customer,
+            taxi=taxi,
+        )
+        Booking.objects.create(
+            user=other_customer,
+            taxi=taxi,
+        )
+
+        response = self.client.get(
+            reverse('admin_user_detail', args=[customer.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context['bookings']),
+            [customer_booking],
+        )
+        self.assertContains(response, 'Booking history')
+        self.assertContains(response, '#{}'.format(customer_booking.pk))
+        self.assertContains(response, 'CAB-123')
 
     def test_non_staff_user_cannot_view_user_profile_details(self):
         self.client.force_login(self.customer)

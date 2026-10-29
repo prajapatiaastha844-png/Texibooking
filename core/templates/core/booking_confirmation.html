@@ -75,6 +75,17 @@
                     <div class="fw-semibold">{{ booking.taxi.driver.name }}</div>
                 </div>
                 <div class="col-12 col-md-6">
+                    <div class="detail-label mb-1">Driver contact</div>
+                    <div>
+                        <a href="mailto:{{ booking.taxi.driver.email }}" class="d-block">
+                            {{ booking.taxi.driver.email }}
+                        </a>
+                        <a href="tel:{{ booking.taxi.driver.mobile }}">
+                            {{ booking.taxi.driver.mobile }}
+                        </a>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
                     <div class="detail-label mb-1">Booked on</div>
                     <div class="fw-semibold">{{ booking.date|date:"M j, Y, g:i a" }}</div>
                 </div>

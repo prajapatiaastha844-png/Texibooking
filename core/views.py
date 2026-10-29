@@ -648,10 +648,17 @@ def admin_users(request):
                   login_url='admin_login')
 def admin_user_detail(request, user_id):
     user = get_object_or_404(User, pk=user_id)
+    bookings = user.bookings.select_related(
+        'taxi',
+        'taxi__driver',
+    ).order_by('-date')
     return render(
         request,
         'core/admin_user_detail.html',
-        {'user_record': user},
+        {
+            'user_record': user,
+            'bookings': bookings,
+        },
     )
 
 

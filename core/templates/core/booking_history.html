@@ -48,11 +48,27 @@
                             {% for booking in bookings %}
                                 <tr>
                                     <td>#{{ booking.id }}</td>
-                                    <td>{{ booking.taxi.type }} · {{ booking.taxi.number }}</td>
+                                    <td>
+                                        <div class="fw-semibold">{{ booking.taxi.type }}</div>
+                                        <div class="small text-secondary">{{ booking.taxi.number }}</div>
+                                        <div class="small">₹{{ booking.taxi.price }}</div>
+                                    </td>
                                     <td>{{ booking.taxi.source }} to {{ booking.taxi.destination }}</td>
-                                    <td>{{ booking.taxi.driver.name }}</td>
+                                    <td>
+                                        <div class="fw-semibold">{{ booking.taxi.driver.name }}</div>
+                                        <a class="small d-block" href="mailto:{{ booking.taxi.driver.email }}">{{ booking.taxi.driver.email }}</a>
+                                        <a class="small d-block" href="tel:{{ booking.taxi.driver.mobile }}">{{ booking.taxi.driver.mobile }}</a>
+                                    </td>
                                     <td>{{ booking.date|date:"M j, Y, g:i a" }}</td>
-                                    <td><span class="badge text-bg-secondary">{{ booking.status }}</span></td>
+                                    <td>
+                                        {% if booking.status == 'Approved' %}
+                                            <span class="badge text-bg-success">{{ booking.status }}</span>
+                                        {% elif booking.status == 'Cancelled' %}
+                                            <span class="badge text-bg-danger">{{ booking.status }}</span>
+                                        {% else %}
+                                            <span class="badge text-bg-warning text-dark">{{ booking.status }}</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
