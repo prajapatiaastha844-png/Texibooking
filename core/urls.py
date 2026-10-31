@@ -33,6 +33,11 @@ urlpatterns = [
         views.booking_history,
         name='user_booking_history',
     ),
+    path(
+        'my-dashboard/bookings/<int:booking_id>/cancel/',
+        views.cancel_booking,
+        name='cancel_booking',
+    ),
     
     path('logout/user/', views.user_logout, name='user_logout'),
     path('driver/login/', views.driver_login, name='driver_login'),

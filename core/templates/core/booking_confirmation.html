@@ -96,6 +96,15 @@
                     View booking history
                 </a>
             </div>
+            {% if booking.status != 'Cancelled' %}
+                <form method="post" action="{% url 'cancel_booking' booking.id %}" class="text-center mt-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger"
+                            onclick="return confirm('Cancel this booking?');">
+                        Cancel booking
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </section>
 </main>

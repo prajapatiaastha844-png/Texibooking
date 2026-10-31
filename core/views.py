@@ -531,7 +531,46 @@ def booking_confirmation(request, booking_id):
     return render(request, 'core/booking_confirmation.html', {
         'booking': booking,
     })
-    
+
+
+@require_POST
+def cancel_booking(request, booking_id):
+    customer_id = request.session.get('customer_user_id')
+    if customer_id is None:
+        messages.info(request, 'Please sign in to cancel a booking.')
+        return redirect('user_login')
+
+    customer = User.objects.filter(pk=customer_id).first()
+    if customer is None:
+        request.session.pop('customer_user_id', None)
+        messages.info(request, 'Please sign in again.')
+        return redirect('user_login')
+
+    with transaction.atomic():
+        booking = get_object_or_404(
+            Booking.objects.select_for_update().select_related('taxi'),
+            pk=booking_id,
+            user=customer,
+        )
+
+        if booking.status != 'Cancelled':
+            booking.status = 'Cancelled'
+            booking.save(update_fields=['status'])
+
+            taxi = Taxi.objects.select_for_update().get(pk=booking.taxi_id)
+            has_active_booking = Booking.objects.filter(
+                taxi=taxi,
+            ).exclude(status='Cancelled').exists()
+            if not has_active_booking and not taxi.availability:
+                taxi.availability = True
+                taxi.save(update_fields=['availability'])
+
+            messages.success(request, 'Booking cancelled successfully.')
+        else:
+            messages.info(request, 'This booking is already cancelled.')
+
+    return redirect('booking_history')
+
 
 def driver_dashboard(request):
     driver_id = request.session.get('driver_user_id')
@@ -544,7 +583,14 @@ def driver_dashboard(request):
         messages.info(request, 'Please sign in to continue.')
         return redirect('driver_login')
 
-    return render(request, 'core/driver_dashboard.html', {'driver': driver})
+    bookings = Booking.objects.filter(
+        taxi__driver=driver,
+    ).select_related('user', 'taxi').order_by('-date')
+
+    return render(request, 'core/driver_dashboard.html', {
+        'driver': driver,
+        'bookings': bookings,
+    })
 
 
 @require_POST

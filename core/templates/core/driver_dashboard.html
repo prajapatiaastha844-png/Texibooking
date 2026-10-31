@@ -101,6 +101,47 @@
             </div>
         </div>
     </section>
+
+    <section class="card content-card shadow-sm mt-4" aria-labelledby="bookings-heading">
+        <div class="card-body p-4 p-md-5">
+            <h2 id="bookings-heading" class="h5 fw-bold mb-4">
+                Assigned bookings
+            </h2>
+            {% if bookings %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Passenger</th>
+                                <th>Taxi</th>
+                                <th>Route</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings %}
+                                <tr>
+                                    <td>#{{ booking.id }}</td>
+                                    <td>
+                                        <div class="fw-semibold">{{ booking.user.name }}</div>
+                                        <div class="small text-secondary">{{ booking.user.email }}</div>
+                                    </td>
+                                    <td>{{ booking.taxi.number }}</td>
+                                    <td>{{ booking.taxi.source }} to {{ booking.taxi.destination }}</td>
+                                    <td>{{ booking.date|date:"M j, Y, g:i a" }}</td>
+                                    <td>{{ booking.status }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-secondary mb-0">You have no assigned bookings.</p>
+            {% endif %}
+        </div>
+    </section>
 </main>
 </body>
 </html>

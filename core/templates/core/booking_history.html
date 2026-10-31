@@ -68,6 +68,15 @@
                                         {% else %}
                                             <span class="badge text-bg-warning text-dark">{{ booking.status }}</span>
                                         {% endif %}
+                                        {% if booking.status != 'Cancelled' %}
+                                            <form method="post" action="{% url 'cancel_booking' booking.id %}" class="mt-2">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                        onclick="return confirm('Cancel this booking?');">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
