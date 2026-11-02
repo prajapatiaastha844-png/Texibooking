@@ -89,7 +89,23 @@
 
     <section class="card profile-card shadow-sm mt-4">
         <div class="card-body p-4">
-            <h2 class="h5 fw-bold mb-3">Booking history</h2>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h2 class="h5 fw-bold mb-0">Booking history</h2>
+                <form method="GET" class="d-flex align-items-center gap-2">
+                    <label for="booking-status" class="form-label mb-0 small fw-semibold">
+                        Status
+                    </label>
+                    <select id="booking-status" name="status"
+                            class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="all"{% if status_filter == 'all' %} selected{% endif %}>All</option>
+                        {% for value, label in booking_statuses %}
+                            <option value="{{ value }}"{% if status_filter == value %} selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
             {% if bookings %}
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
@@ -134,7 +150,13 @@
                     </table>
                 </div>
             {% else %}
-                <p class="text-secondary mb-0">No bookings yet</p>
+                <p class="text-secondary mb-0">
+                    {% if status_filter == 'all' %}
+                        No bookings yet
+                    {% else %}
+                        No {{ status_filter|lower }} bookings
+                    {% endif %}
+                </p>
             {% endif %}
         </div>
     </section>

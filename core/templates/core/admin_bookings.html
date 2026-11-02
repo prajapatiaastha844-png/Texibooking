@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage Bookings | Taxi Booking System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <style>
+        body { background: #f3f6fa; }
+        .admin-navbar { background: #172033; }
+        .page-card { border: 0; border-radius: 12px; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark admin-navbar">
+    <div class="container-xxl">
+        <a class="navbar-brand fw-bold" href="{% url 'admin_dashboard' %}">
+            Taxi Admin
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <a class="nav-link text-white" href="{% url 'admin_dashboard' %}">Dashboard</a>
+            <form method="POST" action="{% url 'admin_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+<main class="container-xxl py-4">
+    <a class="text-decoration-none small" href="{% url 'admin_dashboard' %}">
+        &larr; Back to dashboard
+    </a>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-2 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Bookings</h1>
+            <p class="text-secondary mb-0">Review bookings by status.</p>
+        </div>
+        <form method="GET" class="d-flex align-items-center gap-2">
+            <label for="booking-status" class="form-label mb-0 fw-semibold">Status</label>
+            <select id="booking-status" name="status" class="form-select"
+                    onchange="this.form.submit()">
+                <option value="all"{% if status_filter == 'all' %} selected{% endif %}>All</option>
+                {% for value, label in booking_statuses %}
+                    <option value="{{ value }}"{% if status_filter == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <section class="card page-card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Taxi</th>
+                        <th>User</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Price</th>
+                        <th class="pe-4">Status</th>
+                        <th class="pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <td class="ps-4 fw-semibold">{{ booking.taxi.number }}</td>
+                            <td>{{ booking.user.name }}</td>
+                            <td>{{ booking.taxi.source }}</td>
+                            <td>{{ booking.taxi.destination }}</td>
+                            <td>₹{{ booking.taxi.price|floatformat:2 }}</td>
+                            <td class="pe-4">{{ booking.status }}</td>
+                            <td class="pe-4">
+                                {% if booking.status == 'Pending' %}
+                                    <div class="d-flex gap-2">
+                                        <form method="POST"
+                                              action="{% url 'admin_booking_accept' booking.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                Accept
+                                            </button>
+                                        </form>
+                                        <form method="POST"
+                                              action="{% url 'admin_booking_reject' booking.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="text-secondary">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-secondary py-5">
+                                No {{ status_filter|lower }} bookings.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

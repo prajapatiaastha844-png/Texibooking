@@ -692,18 +692,70 @@ def admin_users(request):
 
 @user_passes_test(lambda user: user.is_authenticated and user.is_staff,
                   login_url='admin_login')
+def admin_bookings(request):
+    status_filter = request.GET.get('status', 'Pending')
+    if status_filter != 'all' and status_filter not in dict(Booking.STATUS_CHOICES):
+        status_filter = 'Pending'
+
+    bookings = Booking.objects.select_related('user', 'taxi').order_by('-date')
+    if status_filter != 'all':
+        bookings = bookings.filter(status=status_filter)
+
+    return render(
+        request,
+        'core/admin_bookings.html',
+        {
+            'bookings': bookings,
+            'status_filter': status_filter,
+            'booking_statuses': Booking.STATUS_CHOICES,
+        },
+    )
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff,
+                  login_url='admin_login')
+@require_POST
+def admin_booking_accept(request, booking_id):
+    booking = get_object_or_404(Booking, pk=booking_id)
+    booking.status = 'Approved'
+    booking.save(update_fields=['status'])
+    messages.success(request, 'Booking #{} accepted.'.format(booking.pk))
+    return redirect('admin_bookings')
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff,
+                  login_url='admin_login')
+@require_POST
+def admin_booking_reject(request, booking_id):
+    booking = get_object_or_404(Booking, pk=booking_id)
+    booking.status = 'Cancelled'
+    booking.save(update_fields=['status'])
+    messages.success(request, 'Booking #{} rejected.'.format(booking.pk))
+    return redirect('admin_bookings')
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff,
+                  login_url='admin_login')
 def admin_user_detail(request, user_id):
     user = get_object_or_404(User, pk=user_id)
     bookings = user.bookings.select_related(
         'taxi',
         'taxi__driver',
     ).order_by('-date')
+    status_filter = request.GET.get('status', 'Pending')
+    if status_filter != 'all':
+        if status_filter not in dict(Booking.STATUS_CHOICES):
+            status_filter = 'Pending'
+        bookings = bookings.filter(status=status_filter)
+
     return render(
         request,
         'core/admin_user_detail.html',
         {
             'user_record': user,
             'bookings': bookings,
+            'status_filter': status_filter,
+            'booking_statuses': Booking.STATUS_CHOICES,
         },
     )
 

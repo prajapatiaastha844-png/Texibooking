@@ -82,6 +82,17 @@ urlpatterns = [
         name='admin_driver_delete',
     ),
     path('users/', views.admin_users, name='admin_users'),
+    path('bookings/', views.admin_bookings, name='admin_bookings'),
+    path(
+        'bookings/<int:booking_id>/accept/',
+        views.admin_booking_accept,
+        name='admin_booking_accept',
+    ),
+    path(
+        'bookings/<int:booking_id>/reject/',
+        views.admin_booking_reject,
+        name='admin_booking_reject',
+    ),
     path('users/<int:user_id>/', views.admin_user_detail, name='admin_user_detail'),
     path('users/<int:user_id>/edit/', views.admin_user_edit, name='admin_user_edit'),
     path('users/<int:user_id>/delete/', views.admin_user_delete, name='admin_user_delete'),
