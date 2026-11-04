@@ -181,6 +181,10 @@ def driver_forgot_password(request):
                         recipient_list=[driver.email],
                         fail_silently=False,
                     )
+                    print(
+                        f'Driver password reset OTP for {driver.email}: {otp}',
+                        flush=True,
+                    )
                 request.session['driver_password_reset_token'] = str(
                     challenge.token
                 )
@@ -594,6 +598,48 @@ def driver_dashboard(request):
 
 
 @require_POST
+def driver_booking_accept(request, booking_id):
+    driver_id = request.session.get('driver_user_id')
+    if driver_id is None:
+        return redirect('driver_login')
+
+    booking = get_object_or_404(
+        Booking,
+        pk=booking_id,
+        taxi__driver_id=driver_id,
+    )
+    if booking.status == 'Pending':
+        booking.status = 'Approved'
+        booking.save(update_fields=['status'])
+        messages.success(request, 'Booking #{} accepted.'.format(booking.pk))
+    else:
+        messages.info(request, 'This booking has already been reviewed.')
+
+    return redirect('driver_dashboard')
+
+
+@require_POST
+def driver_booking_reject(request, booking_id):
+    driver_id = request.session.get('driver_user_id')
+    if driver_id is None:
+        return redirect('driver_login')
+
+    booking = get_object_or_404(
+        Booking,
+        pk=booking_id,
+        taxi__driver_id=driver_id,
+    )
+    if booking.status == 'Pending':
+        booking.status = 'Cancelled'
+        booking.save(update_fields=['status'])
+        messages.success(request, 'Booking #{} rejected.'.format(booking.pk))
+    else:
+        messages.info(request, 'This booking has already been reviewed.')
+
+    return redirect('driver_dashboard')
+
+
+@require_POST
 def user_logout(request):
     request.session.pop('customer_user_id', None)
     messages.success(request, 'You have been signed out.')
@@ -728,7 +774,7 @@ def admin_booking_accept(request, booking_id):
 @require_POST
 def admin_booking_reject(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
-    booking.status = 'Cancelled'
+    booking.status = 'Rejected'
     booking.save(update_fields=['status'])
     messages.success(request, 'Booking #{} rejected.'.format(booking.pk))
     return redirect('admin_bookings')
@@ -846,6 +892,10 @@ def admin_forgot_password(request):
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,
+                )
+                print(
+                    f'Password reset OTP for {user.email}: {otp}',
+                    flush=True,
                 )
 
             request.session['admin_password_reset_token'] = str(challenge.token)

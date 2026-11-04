@@ -12,6 +12,7 @@ class Booking(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
         ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
         ('Cancelled', 'Cancelled'),
     ]
 

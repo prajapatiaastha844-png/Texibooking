@@ -379,6 +379,70 @@ class DriverLoginTests(TestCase):
         self.assertContains(response, '#{}'.format(assigned_booking.pk))
         self.assertNotContains(response, 'CAB-102')
 
+    def test_driver_accepts_assigned_pending_booking(self):
+        taxi = Taxi.objects.create(
+            number='CAB-201',
+            type='Sedan',
+            source='Downtown',
+            destination='Airport',
+            price='25.50',
+            driver=self.driver,
+        )
+        customer = CustomerUser.objects.create(
+            name='Rider Two',
+            email='rider-two@example.com',
+            mobile='5551234567',
+            password='Strong-Pass-932!',
+        )
+        booking = Booking.objects.create(
+            user=customer,
+            taxi=taxi,
+            status='Pending',
+        )
+        session = self.client.session
+        session['driver_user_id'] = self.driver.pk
+        session.save()
+
+        response = self.client.post(
+            reverse('driver_booking_accept', args=[booking.pk]),
+        )
+
+        self.assertRedirects(response, reverse('driver_dashboard'))
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, 'Approved')
+
+    def test_driver_rejects_assigned_pending_booking(self):
+        taxi = Taxi.objects.create(
+            number='CAB-202',
+            type='SUV',
+            source='Station',
+            destination='Hotel',
+            price='35.50',
+            driver=self.driver,
+        )
+        customer = CustomerUser.objects.create(
+            name='Rider Three',
+            email='rider-three@example.com',
+            mobile='5551234568',
+            password='Strong-Pass-932!',
+        )
+        booking = Booking.objects.create(
+            user=customer,
+            taxi=taxi,
+            status='Pending',
+        )
+        session = self.client.session
+        session['driver_user_id'] = self.driver.pk
+        session.save()
+
+        response = self.client.post(
+            reverse('driver_booking_reject', args=[booking.pk]),
+        )
+
+        self.assertRedirects(response, reverse('driver_dashboard'))
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, 'Cancelled')
+
     def test_driver_login_redirects_existing_session_to_dashboard(self):
         session = self.client.session
         session['driver_user_id'] = self.driver.pk

@@ -46,6 +46,16 @@ urlpatterns = [
         views.driver_dashboard,
         name='driver_dashboard',
     ),
+    path(
+        'driver/bookings/<int:booking_id>/accept/',
+        views.driver_booking_accept,
+        name='driver_booking_accept',
+    ),
+    path(
+        'driver/bookings/<int:booking_id>/reject/',
+        views.driver_booking_reject,
+        name='driver_booking_reject',
+    ),
     path('logout/driver/', views.driver_logout, name='driver_logout'),
     path(
         'driver/forgot-password/',
