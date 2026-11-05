@@ -1,0 +1,31 @@
+{% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-3" aria-label="Pagination">
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+                {% if page_obj.has_previous %}
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if status_filter and status_filter != 'Pending' %}&amp;status={{ status_filter }}{% endif %}">
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="page-link">Previous</span>
+                {% endif %}
+            </li>
+            {% for page_number in page_obj.paginator.page_range %}
+                <li class="page-item{% if page_number == page_obj.number %} active{% endif %}">
+                    <a class="page-link" href="?page={{ page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if status_filter and status_filter != 'Pending' %}&amp;status={{ status_filter }}{% endif %}">
+                        {{ page_number }}
+                    </a>
+                </li>
+            {% endfor %}
+            <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+                {% if page_obj.has_next %}
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}{% if status_filter and status_filter != 'Pending' %}&amp;status={{ status_filter }}{% endif %}">
+                        Next
+                    </a>
+                {% else %}
+                    <span class="page-link">Next</span>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+{% endif %}

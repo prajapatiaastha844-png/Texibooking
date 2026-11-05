@@ -77,7 +77,6 @@
             {% endif %}
         </div>
         <div id="driver-search-help" class="form-text">
-            Search by driver name, email, license number, or mobile.
         </div>
     </form>
 
@@ -107,21 +106,25 @@
                             <td>{{ driver.license_number }}</td>
                             <td>{{ driver.mobile }}</td>
                             <td class="pe-4">
-                                <a class="btn btn-outline-primary btn-sm"
-                                   href="{% url 'admin_driver_detail' driver.id %}">
-                                    View profile
-                                </a>
-                            </td>
-                            <td class="pe-4">
-                                <form method="POST"
-                                      action="{% url 'admin_driver_delete' driver.id %}"
-                                      onsubmit="return confirm('Delete {{ driver.name|escapejs }}? This cannot be undone.');">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                            class="btn btn-outline-danger btn-sm">
-                                        Delete
-                                    </button>
-                                </form>
+                                <div class="d-inline-flex gap-2">
+                                    <a class="btn btn-outline-secondary btn-sm"
+                                       href="{% url 'admin_driver_detail' driver.id %}">
+                                        View
+                                    </a>
+                                    <a class="btn btn-outline-primary btn-sm"
+                                       href="{% url 'admin_driver_edit' driver.id %}">
+                                        Edit
+                                    </a>
+                                    <form method="POST"
+                                          action="{% url 'admin_driver_delete' driver.id %}"
+                                          onsubmit="return confirm('Delete {{ driver.name|escapejs }}? This cannot be undone.');">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="btn btn-outline-danger btn-sm">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     {% empty %}
@@ -144,6 +147,37 @@
             </table>
         </div>
     </section>
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-3" aria-label="Registered drivers pagination">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item{% if not page_obj.has_previous %} disabled{% endif %}">
+                    {% if page_obj.has_previous %}
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">
+                            Previous
+                        </a>
+                    {% else %}
+                        <span class="page-link">Previous</span>
+                    {% endif %}
+                </li>
+                {% for page_number in page_obj.paginator.page_range %}
+                    <li class="page-item{% if page_number == page_obj.number %} active{% endif %}">
+                        <a class="page-link" href="?page={{ page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">
+                            {{ page_number }}
+                        </a>
+                    </li>
+                {% endfor %}
+                <li class="page-item{% if not page_obj.has_next %} disabled{% endif %}">
+                    {% if page_obj.has_next %}
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&amp;q={{ search_query|urlencode }}{% endif %}">
+                            Next
+                        </a>
+                    {% else %}
+                        <span class="page-link">Next</span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
 </main>
 </body>
 </html>

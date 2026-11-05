@@ -12,7 +12,7 @@ class CustomerRegistrationForm(forms.ModelForm):
     mobile = forms.CharField(
         label='Phone',
         max_length=32,
-        widget=forms.TelInput(attrs={
+        widget=forms.TextInput(attrs={
             'class': 'form-control form-control-lg',
             'autocomplete': 'tel',
             'placeholder': 'Your phone number',
@@ -96,7 +96,7 @@ class DriverRegistrationForm(forms.ModelForm):
     mobile = forms.CharField(
         label='Phone',
         max_length=32,
-        widget=forms.TelInput(attrs={
+        widget=forms.TextInput(attrs={
             'class': 'form-control form-control-lg',
             'autocomplete': 'tel',
             'placeholder': 'Your phone number',
@@ -288,12 +288,18 @@ class UserEditForm(forms.ModelForm):
         fields = ('name', 'email', 'mobile')
 
 
+class DriverEditForm(forms.ModelForm):
+    class Meta:
+        model = Driver
+        fields = ('name', 'email', 'license_number', 'mobile', 'taxi_number')
+
+
 class UserSearchForm(forms.Form):
     q = forms.CharField(
         label='Search users',
         required=False,
         strip=True,
-        widget=forms.SearchInput(attrs={
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Search by name or email',
             'aria-describedby': 'user-search-help',
@@ -306,7 +312,7 @@ class DriverSearchForm(forms.Form):
         label='Search drivers',
         required=False,
         strip=True,
-        widget=forms.SearchInput(attrs={
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Search by name, email, license number, or mobile',
             'aria-describedby': 'driver-search-help',
@@ -319,7 +325,7 @@ class TaxiSearchForm(forms.Form):
         label='Search taxis',
         required=False,
         strip=True,
-        widget=forms.SearchInput(attrs={
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Search by taxi number, source, or destination',
             'aria-describedby': 'taxi-search-help',

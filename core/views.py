@@ -14,6 +14,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .forms import (
@@ -22,6 +23,7 @@ from .forms import (
     CustomerLoginForm,
     CustomerRegistrationForm,
     CustomerTaxiSearchForm,
+    DriverEditForm,
     DriverForgotPasswordForm,
     DriverLoginForm,
     DriverRegistrationForm,
@@ -508,10 +510,12 @@ def booking_history(request):
         'taxi',
         'taxi__driver',
     ).order_by('-date')
+    page_obj = Paginator(bookings, 10).get_page(request.GET.get('page'))
 
     return render(request, 'core/booking_history.html', {
         'customer': customer,
-        'bookings': bookings,
+        'bookings': page_obj.object_list,
+        'page_obj': page_obj,
     })
 
 
@@ -590,10 +594,12 @@ def driver_dashboard(request):
     bookings = Booking.objects.filter(
         taxi__driver=driver,
     ).select_related('user', 'taxi').order_by('-date')
+    page_obj = Paginator(bookings, 10).get_page(request.GET.get('page'))
 
     return render(request, 'core/driver_dashboard.html', {
         'driver': driver,
-        'bookings': bookings,
+        'bookings': page_obj.object_list,
+        'page_obj': page_obj,
     })
 
 
@@ -680,12 +686,15 @@ def admin_drivers(request):
             | Q(license_number__icontains=search_query)
             | Q(mobile__icontains=search_query),
         )
+    paginator = Paginator(drivers, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     return render(
         request,
         'core/admin_drivers.html',
         {
-            'drivers': drivers,
+            'drivers': page_obj.object_list,
+            'page_obj': page_obj,
             'search_form': search_form,
             'search_query': search_query,
         },
@@ -700,6 +709,23 @@ def admin_driver_detail(request, driver_id):
         request,
         'core/admin_driver_detail.html',
         {'driver': driver},
+    )
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff,
+                  login_url='admin_login')
+def admin_driver_edit(request, driver_id):
+    driver = get_object_or_404(Driver, pk=driver_id)
+    form = DriverEditForm(request.POST or None, instance=driver)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Driver details updated successfully.')
+        return redirect('admin_drivers')
+
+    return render(
+        request,
+        'core/admin_driver_edit.html',
+        {'form': form, 'driver': driver},
     )
 
 
@@ -724,12 +750,14 @@ def admin_users(request):
         users = users.filter(
             Q(name__icontains=search_query) | Q(email__icontains=search_query),
         )
+    page_obj = Paginator(users, 10).get_page(request.GET.get('page'))
 
     return render(
         request,
         'core/admin_users.html',
         {
-            'users': users,
+            'users': page_obj.object_list,
+            'page_obj': page_obj,
             'search_form': search_form,
             'search_query': search_query,
         },
@@ -746,12 +774,14 @@ def admin_bookings(request):
     bookings = Booking.objects.select_related('user', 'taxi').order_by('-date')
     if status_filter != 'all':
         bookings = bookings.filter(status=status_filter)
+    page_obj = Paginator(bookings, 10).get_page(request.GET.get('page'))
 
     return render(
         request,
         'core/admin_bookings.html',
         {
-            'bookings': bookings,
+            'bookings': page_obj.object_list,
+            'page_obj': page_obj,
             'status_filter': status_filter,
             'booking_statuses': Booking.STATUS_CHOICES,
         },
@@ -1050,12 +1080,14 @@ def admin_taxi_list(request):
             | Q(source__icontains=search_query)
             | Q(destination__icontains=search_query),
         )
+    page_obj = Paginator(taxis, 10).get_page(request.GET.get('page'))
 
     return render(
         request,
         'core/admin_taxi_list.html',
         {
-            'taxis': taxis,
+            'taxis': page_obj.object_list,
+            'page_obj': page_obj,
             'search_form': search_form,
             'search_query': search_query,
         },

@@ -87,6 +87,11 @@ urlpatterns = [
         name='admin_driver_detail',
     ),
     path(
+        'drivers/<int:driver_id>/edit/',
+        views.admin_driver_edit,
+        name='admin_driver_edit',
+    ),
+    path(
         'drivers/<int:driver_id>/delete/',
         views.admin_driver_delete,
         name='admin_driver_delete',
