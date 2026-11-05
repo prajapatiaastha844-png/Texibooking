@@ -158,10 +158,9 @@
     </a>
 </li>
                 <li class="nav-item">
-                    <span class="nav-link text-white-50" aria-disabled="true">
+                    <a class="nav-link" href="{% url 'admin_bookings' %}">
                         Bookings
-                        <span class="badge rounded-pill text-bg-secondary ms-1">Soon</span>
-                    </span>
+                    </a>
                 </li>
                 <li class="nav-item ms-2">
                     <form method="POST" action="{% url 'admin_logout' %}">

@@ -771,7 +771,9 @@ def admin_bookings(request):
     if status_filter != 'all' and status_filter not in dict(Booking.STATUS_CHOICES):
         status_filter = 'Pending'
 
-    bookings = Booking.objects.select_related('user', 'taxi').order_by('-date')
+    bookings = Booking.objects.select_related(
+        'user', 'taxi', 'taxi__driver'
+    ).order_by('-date')
     if status_filter != 'all':
         bookings = bookings.filter(status=status_filter)
     page_obj = Paginator(bookings, 10).get_page(request.GET.get('page'))
