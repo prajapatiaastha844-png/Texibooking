@@ -1225,6 +1225,95 @@ class AdminAuthenticationTests(TestCase):
         self.assertNotContains(response, 'href="#users"')
         self.assertNotContains(response, 'href="#bookings"')
 
+    def test_admin_can_delete_any_booking_and_release_taxi(self):
+        self.client.force_login(self.admin)
+        customer = CustomerUser.objects.create(
+            name='Morgan Customer',
+            email='morgan@example.com',
+            mobile='5559876543',
+            password='customer-password',
+        )
+        driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='morgan-driver@example.com',
+            license_number='DL-123456',
+            mobile='5555551234',
+            password='driver-password',
+        )
+        taxi = Taxi.objects.create(
+            number='CAB-123',
+            type='Sedan',
+            source='Downtown',
+            destination='Airport',
+            price='25.50',
+            availability=False,
+            driver=driver,
+        )
+        booking = Booking.objects.create(
+            user=customer,
+            taxi=taxi,
+            status='Rejected',
+        )
+        delete_url = reverse('admin_booking_delete', args=[booking.pk])
+
+        listing = self.client.get(reverse('admin_bookings'), {'status': 'all'})
+        self.assertContains(listing, 'Delete')
+        self.assertContains(listing, delete_url)
+
+        response = self.client.get(delete_url)
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(Booking.objects.filter(pk=booking.pk).exists())
+
+        response = self.client.post(delete_url, follow=True)
+
+        self.assertRedirects(
+            response,
+            reverse('admin_bookings'),
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(Booking.objects.filter(pk=booking.pk).exists())
+        taxi.refresh_from_db()
+        self.assertTrue(taxi.availability)
+        self.assertContains(response, 'Booking #{} deleted successfully.'.format(booking.pk))
+
+    def test_deleting_booking_keeps_taxi_unavailable_for_another_active_booking(self):
+        self.client.force_login(self.admin)
+        customer = CustomerUser.objects.create(
+            name='Morgan Customer',
+            email='morgan@example.com',
+            mobile='5559876543',
+            password='customer-password',
+        )
+        other_customer = CustomerUser.objects.create(
+            name='Taylor Customer',
+            email='taylor@example.com',
+            mobile='5551234567',
+            password='customer-password',
+        )
+        driver = Driver.objects.create(
+            name='Morgan Driver',
+            email='morgan-driver@example.com',
+            license_number='DL-123456',
+            mobile='5555551234',
+            password='driver-password',
+        )
+        taxi = Taxi.objects.create(
+            number='CAB-123',
+            type='Sedan',
+            source='Downtown',
+            destination='Airport',
+            price='25.50',
+            availability=False,
+            driver=driver,
+        )
+        booking = Booking.objects.create(user=customer, taxi=taxi)
+        Booking.objects.create(user=other_customer, taxi=taxi)
+
+        self.client.post(reverse('admin_booking_delete', args=[booking.pk]))
+
+        taxi.refresh_from_db()
+        self.assertFalse(taxi.availability)
+
     def test_dashboard_shows_customer_driver_and_admin_counts(self):
         self.client.force_login(self.admin)
         CustomerUser.objects.create(

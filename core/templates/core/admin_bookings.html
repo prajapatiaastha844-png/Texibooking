@@ -69,7 +69,8 @@
         </form>
     </div>
     <section class="card page-card shadow-sm" aria-label="Booking listing">
-        <div class="table-responsive">
+        <div class="table-responsive" role="region"
+             aria-label="Bookings table" tabindex="0">
             <table class="table table-striped table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
@@ -112,26 +113,32 @@
                                 {% endif %}
                             </td>
                             <td class="pe-4">
+                                <div class="d-flex flex-wrap gap-2">
                                 {% if booking.status == 'Pending' %}
-                                    <div class="d-flex gap-2">
-                                        <form method="POST"
-                                              action="{% url 'admin_booking_accept' booking.pk %}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-success btn-sm">
-                                                Accept
-                                            </button>
-                                        </form>
-                                        <form method="POST"
-                                              action="{% url 'admin_booking_reject' booking.pk %}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                {% else %}
-                                    <span class="text-secondary">—</span>
+                                    <form method="POST"
+                                          action="{% url 'admin_booking_accept' booking.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            Accept
+                                        </button>
+                                    </form>
+                                    <form method="POST"
+                                          action="{% url 'admin_booking_reject' booking.pk %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            Reject
+                                        </button>
+                                    </form>
                                 {% endif %}
+                                    <form method="POST"
+                                          action="{% url 'admin_booking_delete' booking.pk %}"
+                                          onsubmit="return confirm('Delete this booking?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     {% empty %}

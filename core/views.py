@@ -793,6 +793,33 @@ def admin_bookings(request):
 @user_passes_test(lambda user: user.is_authenticated and user.is_staff,
                   login_url='admin_login')
 @require_POST
+def admin_booking_delete(request, booking_id):
+    with transaction.atomic():
+        booking = get_object_or_404(
+            Booking.objects.select_for_update(),
+            pk=booking_id,
+        )
+        taxi = Taxi.objects.select_for_update().get(pk=booking.taxi_id)
+        booking_id = booking.pk
+        booking.delete()
+
+        has_active_booking = Booking.objects.filter(
+            taxi=taxi,
+        ).exclude(status='Cancelled').exists()
+        if not has_active_booking and not taxi.availability:
+            taxi.availability = True
+            taxi.save(update_fields=['availability'])
+
+    messages.success(
+        request,
+        'Booking #{} deleted successfully.'.format(booking_id),
+    )
+    return redirect('admin_bookings')
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_staff,
+                  login_url='admin_login')
+@require_POST
 def admin_booking_accept(request, booking_id):
     booking = get_object_or_404(Booking, pk=booking_id)
     booking.status = 'Approved'
